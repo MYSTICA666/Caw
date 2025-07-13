@@ -93,7 +93,6 @@ contract CawClientManager {
 
     emit ClientCreated(nextClientId, clients[nextClientId]);
     nextClientId++;
-
   }
 
   /**

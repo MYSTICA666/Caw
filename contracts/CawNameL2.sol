@@ -6,6 +6,7 @@ import "@layerzerolabs/oapp-evm/contracts/oapp/libs/OptionsBuilder.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/ICawActions.sol";
 import "./CawNameURI.sol";
 import "./CawName.sol";
 
@@ -25,12 +26,13 @@ contract CawNameL2 is
 
   uint256 public totalCaw;
 
-  address public cawActions;
+  ICawActions public cawActions;
 
   // In a normal ERC271, ownerOf reverts if there is no owner,
   // here, since it's not a real ERC721, just a pretender,
-  // we return the zero addres... probably fine. Right?
+  // we return the zero addres.
   mapping(uint256 => address) public ownerOf;
+  mapping(uint32 => string) public usernames;
 
   // Keeping track of clients to which the user has authenticated
   mapping(uint32 => mapping(uint32 => bool)) public authenticated;
@@ -47,17 +49,38 @@ contract CawNameL2 is
   bool public bypassLZ;
   CawName public cawName;
 
+  event OwnerSet(uint32 tokenId, address newOwner);
+  event UsernameMinted(uint32 tokenId, address owner);
+  event Authenticated(uint32 cawClientId, uint32 tokenId);
+
   bytes4 public setWithdrawableSelector = bytes4(keccak256("setWithdrawable(uint32[],uint256[])"));
 
   struct Token {
     uint256 tokenId;
     uint256 balance;
     string username;
+    uint256 cawBalance;
+    uint256 nextCawonce;
   }
 
   constructor(address _endpoint)
     OApp(_endpoint, msg.sender)
   {
+  }
+
+  function getTokens(uint32[] memory tokenIds) external view returns (Token[] memory) {
+    uint32 tokenId;
+    uint256 tokenCount = tokenIds.length;
+    Token[] memory userTokens = new Token[](tokenCount);
+    for (uint32 i = 0; i < tokenCount; i++) {
+      tokenId = tokenIds[i];
+
+      userTokens[i].tokenId = tokenId;
+      userTokens[i].username = usernames[tokenId];
+      userTokens[i].cawBalance = cawBalanceOf(tokenId);
+      userTokens[i].nextCawonce = cawActions.nextCawonce(tokenId);
+    }
+    return userTokens;
   }
 
   function setL1Peer(uint32 _eid, address payable peer, bool _bypassLZ) external onlyOwner {
@@ -68,7 +91,7 @@ contract CawNameL2 is
   }
 
   function setCawActions(address _cawActions) external onlyOwner {
-    cawActions = _cawActions;
+    cawActions = ICawActions(_cawActions);
   }
 
   function cawBalanceOf(uint32 tokenId) public view returns (uint256){
@@ -85,7 +108,7 @@ contract CawNameL2 is
   }
 
   function spendAndDistribute(uint32 tokenId, uint256 amountToSpend, uint256 amountToDistribute) public {
-    require(cawActions == _msgSender(), "caller is not the cawActions contract");
+    require(address(cawActions) == _msgSender(), "caller is not the cawActions contract");
     uint256 balance = cawBalanceOf(tokenId);
 
     require(balance >= amountToSpend, 'Insufficient CAW balance');
@@ -116,7 +139,7 @@ contract CawNameL2 is
   }
 
   function addToBalance(uint32 tokenId, uint256 amount) public {
-    require(fromLZ || cawActions == _msgSender(), "caller is not cawActions or LZ");
+    require(fromLZ || address(cawActions) == _msgSender(), "caller is not cawActions or LZ");
 
     setCawBalance(tokenId, cawBalanceOf(tokenId) + amount);
   }
@@ -133,22 +156,26 @@ contract CawNameL2 is
 
   function mintAndUpdateOwners(uint32 tokenId, address owner, string memory username, uint32[] calldata tokenIds, address[] calldata owners) public {
     require(fromLZ, "mintAndUpdateOwners only callable internally");
+    usernames[tokenId] = username;
     ownerOf[tokenId] = owner;
 
     updateOwners(tokenIds, owners);
   }
 
-  function auth(uint32 cawClientId, uint32 tokenId) external onlyOnMainnet {
+  function auth(uint32 cawClientId, uint32 tokenId) public onlyOnMainnet {
+    emit Authenticated(cawClientId, tokenId);
     authenticated[cawClientId][tokenId] = true;
   }
 
   function deposit(uint32 cawClientId, uint32 tokenId, uint256 amount) external onlyOnMainnet {
     totalCaw += amount;
+    auth(cawClientId, tokenId);
     addToBalance(tokenId, amount);
-    authenticated[cawClientId][tokenId] = true;
   }
 
   function mint(uint32 tokenId, address owner, string memory username) external onlyOnMainnet {
+    emit UsernameMinted(tokenId, owner);
+    usernames[tokenId] = username;
     ownerOf[tokenId] = owner;
   }
 
@@ -157,6 +184,7 @@ contract CawNameL2 is
   }
 
   function _setOwnerOf(uint32 tokenId, address newOwner) internal {
+    emit OwnerSet(tokenId, newOwner);
     ownerOf[tokenId] = newOwner;
   }
 
@@ -215,7 +243,7 @@ contract CawNameL2 is
   }
 
   function withdraw(uint32 tokenId, uint256 amount) external {
-    require(cawActions == _msgSender(), "caller is not the cawActions contract");
+    require(address(cawActions) == _msgSender(), "caller is not the cawActions contract");
 
     uint256 balance = cawBalanceOf(tokenId);
     require(balance >= amount, 'Insufficient CAW balance');
@@ -225,7 +253,7 @@ contract CawNameL2 is
   }
 
   function setWithdrawable(uint32[] memory tokenIds, uint256[] memory amounts, uint256 lzTokenAmount) external payable {
-    require(cawActions == _msgSender(), "caller is not CawActions");
+    require(address(cawActions) == _msgSender(), "caller is not CawActions");
     if (bypassLZ)
       cawName.setWithdrawable(tokenIds, amounts);
     else {

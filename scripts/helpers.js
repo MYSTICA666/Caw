@@ -2,7 +2,7 @@
 // just run:
 // .load ./scripts/helpers.js
 //
-// buyUsername(accounts[0], 'dev')
+// buyUsername(accounts[0], 'gilgamesh')
 // deposit(accounts[0], 1, 10000)
 
 (async () => {

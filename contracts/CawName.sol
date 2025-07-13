@@ -66,6 +66,7 @@ contract CawName is
     uint256 withdrawable;
     uint256 tokenId;
     string username;
+    address owner;
   }
 
   CawClientManager clientManager;
@@ -104,7 +105,7 @@ contract CawName is
   function mint(uint32 cawClientId, address owner, string memory username, uint32 newId, uint256 lzTokenAmount) public payable {
     require(minter == _msgSender(), "caller is not the minter");
     usernames.push(username);
-    _safeMint(owner, newId);
+    _mint(owner, newId);
 
     (uint256 fee, address feeAddress) = clientManager.getMintFeeAndAddress(cawClientId);
     uint256 lzEthAmount = msg.value - payFee(fee, feeAddress);
@@ -133,9 +134,21 @@ contract CawName is
 
       userTokens[i].withdrawable = withdrawable[tokenId];
       userTokens[i].username = usernames[tokenId - 1];
+      userTokens[i].owner = ownerOf(tokenId);
       userTokens[i].tokenId = tokenId;
     }
     return userTokens;
+  }
+
+  function token(uint32 tokenId) external view returns (Token memory) {
+    Token memory token = Token({
+      withdrawable: withdrawable[tokenId],
+      username: usernames[tokenId - 1],
+      owner: ownerOf(tokenId),
+      tokenId: tokenId
+    });
+
+    return token;
   }
 
   /**
@@ -397,7 +410,7 @@ contract CawName is
       authSelector, clientId, tokenId, tokenIds, owners
     );
 
-    MessagingFee memory quote = lzQuote(authSelector, payload, lzDestId, payInLzToken);
+    quote = lzQuote(authSelector, payload, lzDestId, payInLzToken);
     quote.nativeFee += clientManager.getAuthFee(clientId) * 2;
     return quote;
   }
@@ -410,7 +423,7 @@ contract CawName is
       addToBalanceSelector, clientId, tokenId, amount, tokenIds, owners
     );
 
-    MessagingFee memory quote = lzQuote(addToBalanceSelector, payload, lzDestId, payInLzToken);
+    quote = lzQuote(addToBalanceSelector, payload, lzDestId, payInLzToken);
     quote.nativeFee += clientManager.getDepositFee(clientId) * 2;
 
     if (!authenticated[clientId][tokenId])
@@ -420,13 +433,13 @@ contract CawName is
   }
 
   function mintQuote(uint32 clientId, bool payInLzToken) public view returns (MessagingFee memory quote) {
-    MessagingFee memory quote = updateOwnerQuote(payInLzToken);
+    quote = updateOwnerQuote(payInLzToken);
     quote.nativeFee += clientManager.getMintFee(clientId) * 2;
     return quote;
   }
 
   function withdrawQuote(uint32 clientId, bool payInLzToken) public view returns (MessagingFee memory quote) {
-    MessagingFee memory quote = updateOwnerQuote(payInLzToken);
+    quote = updateOwnerQuote(payInLzToken);
     quote.nativeFee += clientManager.getWithdrawFee(clientId) * 2;
     return quote;
   }
