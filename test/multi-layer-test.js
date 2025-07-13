@@ -28,6 +28,7 @@ const {
 const wethAddress = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const cawAddress = '0xf3b9569f82b18aef890de263b84189bd33ebe452'; // CAW
 const usdcAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'; // USDC
+const gilg = "0xF71338f3eAa483aA66125598B09BA1988e694a95";
 
 const l2 = 8453;
 const l1 = 30101;

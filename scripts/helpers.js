@@ -13,12 +13,12 @@
 
 
   cawAddress = "0x56817dc696448135203C0556f702c6a953260411";
-  clientManagerAddress = '0xea71Ef236fc57d83eaE1D9247572eda1eCEbE7fD';
-  uriGeneratorAddress = '0x4bA43B7aE0C0A1Cc44898DfCE12df7C98C5673c7';
-  cawNamesAddress = '0x330773a8443432A078af34984fF70ae2a032dacA';
-  cawNamesMinterAddress = "0x0bD9885e67b34F4f141Ed85AF3C2ca599c23AAf4";
-  cawNamesL2MainnetAddress = '0xf3FF3891332be3Cb0A28B94218b416454133b26f';
-  cawActionsMainnetAddress = '0xfEfc7E1Ef8866fF0B51a237b6CC6496541C7116b';
+  clientManagerAddress = '0xdB2124deA6BF442FF7FBD76D358771E7d1F4a29F'
+  uriGeneratorAddress = '0xefDcb58F7180CDa18249446b798b373C946E85eD'
+  cawNamesAddress = '0xE3970742a65F3253694a33219e84407d6DA8A46C'
+  cawNamesMinterAddress = '0x6E5d0E2979310613245B8EF5ec58A38607092524'
+  cawNamesL2MainnetAddress = '0x6109eF3B2DDf21264c720C4176c44c6D86De63De' 
+  cawActionsMainnetAddress = '0xaD0c695d2f33797241E7Dc4D019883D67Dce8EEC'
 
   token = await MintableCaw.at(cawAddress);
   minter = await CawNameMinter.at(cawNamesMinterAddress);

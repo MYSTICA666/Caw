@@ -12,8 +12,8 @@
   l1 = 40161;
   defaultClientId = 1;
 
-cawNamesL2Address = '0x07E59E70A03cEB68f2d73CCFF479b6CEabBa165c';
-cawActionsAddress = "0xBab5E0ca318E713FB32675E6eE5e5eF6b3c877FF";
+cawNamesL2Address = '0x55C66CAbF9766AeFB3a770d9ea64E218dF195D9B';
+cawActionsAddress = "0xf3FF3891332be3Cb0A28B94218b416454133b26f";
 
 (async () => {
   cawNames = await CawNameL2.at(cawNamesL2Address);
