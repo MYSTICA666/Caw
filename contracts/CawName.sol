@@ -38,8 +38,9 @@ contract CawName is
   string[] public usernames;
   bool private fromLZ;
 
-  bytes4 public addToBalanceSelector = bytes4(keccak256("depositAndUpdateOwners(uint32,uint32,uint256,uint32[],address[])"));
   bytes4 public mintSelector = bytes4(keccak256("mintAndUpdateOwners(uint32,address,string,uint32[],address[])"));
+
+  bytes4 public addToBalanceSelector = bytes4(keccak256("depositAndUpdateOwners(uint32,uint32,uint256,uint32[],address[])"));
   bytes4 public authSelector = bytes4(keccak256("authenticateAndUpdateOwners(uint32,uint32,uint32[],address[])"));
   bytes4 public updateOwnersSelector = bytes4(keccak256("updateOwners(uint32[],address[])"));
 
@@ -64,6 +65,7 @@ contract CawName is
 
   struct Token {
     uint256 withdrawable;
+    uint256 ownerBalance;
     uint256 tokenId;
     string username;
     address owner;
@@ -134,14 +136,16 @@ contract CawName is
 
       userTokens[i].withdrawable = withdrawable[tokenId];
       userTokens[i].username = usernames[tokenId - 1];
-      userTokens[i].owner = ownerOf(tokenId);
+      userTokens[i].ownerBalance = CAW.balanceOf(user);
       userTokens[i].tokenId = tokenId;
+      userTokens[i].owner = user;
     }
     return userTokens;
   }
 
   function token(uint32 tokenId) external view returns (Token memory) {
     Token memory token = Token({
+      ownerBalance: CAW.balanceOf(ownerOf(tokenId)),
       withdrawable: withdrawable[tokenId],
       username: usernames[tokenId - 1],
       owner: ownerOf(tokenId),

@@ -281,31 +281,26 @@ async function processActions(actions, params) {
 
   console.log("attempting to process", transactionData.actions.length, "actions");
 
-  var result = []
-  while (result.length < transactionData.actions.length) {
-
     // simulate process actions to check which actions will be successful:
-    result = await cawActions.safeProcessActions.call(
-      params.validatorId || 1,
-      transactionData,
-      0, // modify as needed
-      txOptions
-    );
+  result = await cawActions.safeProcessActions.call(
+    params.validatorId || 1,
+    transactionData,
+    0, // modify as needed
+    txOptions
+  );
 
-    console.log("Simulation Result: ", result);
-    var ids = result.map(action => `${action.senderId}-${action.cawonce}`);
-    console.log("successful IDS", ids);
-    var filteredSignedActions = signedActions.filter(action => ids.includes(`${action.data.message.senderId}-${action.data.message.cawonce}`));
-    console.log("filtered Signed Actions", filteredSignedActions);
-    transactionData = {
-      v: filteredSignedActions.map(action => action.sigData.v),
-      r: filteredSignedActions.map(action => action.sigData.r),
-      s: filteredSignedActions.map(action => action.sigData.s),
-      actions: filteredSignedActions.map(action => action.data.message),
-    };
-
-  }
-    console.log("going to actually process", transactionData.actions.length, "actions");
+  console.log("Simulation Result: ", result);
+  var ids = result[0].map(action => `${action.senderId}-${action.cawonce}`);
+  console.log("successful IDS", ids);
+  var filteredSignedActions = signedActions.filter(action => ids.includes(`${action.data.message.senderId}-${action.data.message.cawonce}`));
+  console.log("filtered Signed Actions", filteredSignedActions);
+  transactionData = {
+    v: filteredSignedActions.map(action => action.sigData.v),
+    r: filteredSignedActions.map(action => action.sigData.r),
+    s: filteredSignedActions.map(action => action.sigData.s),
+    actions: filteredSignedActions.map(action => action.data.message),
+  };
+  console.log("going to actually process", transactionData.actions.length, "actions");
 
 
 
