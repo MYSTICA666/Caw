@@ -68,3 +68,5 @@ yarn-error.log*
 
 # doc directory
 /doc
+.bash_profile
+
