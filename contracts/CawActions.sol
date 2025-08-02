@@ -10,7 +10,7 @@ import "./CawNameL2.sol";
 import { MessagingFee } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 contract CawActions is Context {
-  enum ActionType { CAW, LIKE, UNLIKE, RECAW, FOLLOW, UNFOLLOW, WITHDRAW, TIP }
+  enum ActionType { CAW, LIKE, UNLIKE, RECAW, FOLLOW, UNFOLLOW, WITHDRAW, OTHER }
 
   struct ActionData {
     ActionType actionType;
@@ -82,7 +82,7 @@ contract CawActions is Context {
       cawName.withdraw(action.senderId, action.amounts[0]);
     else if ( action.actionType != ActionType.UNLIKE &&
         action.actionType != ActionType.UNFOLLOW &&
-        action.actionType != ActionType.TIP)
+        action.actionType != ActionType.OTHER)
       revert("Invalid action type");
 
     distributeAmounts(validatorId, action);
