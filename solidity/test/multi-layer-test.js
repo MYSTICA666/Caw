@@ -11,6 +11,7 @@ const ISwapper = artifacts.require("ISwapRouter");
 
 const truffleAssert = require('truffle-assertions');
 
+// const MockLayerZeroEndpoint = artifacts.require("@layerzerolabs/test-devtools-evm-hardhat/contracts/mocks/EndpointV2Mock.sol");
 
 const {signTypedMessage} = require('@truffle/hdwallet-provider');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
@@ -506,7 +507,9 @@ contract('CawNames', function(accounts, x) {
     l2Endpoint = await MockLayerZeroEndpoint.new(l2);
     buyAndBurnAddress = gilg;
 
+    console.log("GET TOKEN:")
     token = token || await IERC20.at(cawAddress);
+    console.log("got TOKEN:", token)
     swapper = await ISwapper.at('0x7a250d5630b4cf539739df2c5dacb4c659f2488d'); // uniswap
 
     clientManager = clientManager || await CawClientManager.new(buyAndBurnAddress);
