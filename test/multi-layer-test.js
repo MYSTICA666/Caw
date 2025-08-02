@@ -423,6 +423,18 @@ async function buyUsername(user, name) {
   var quote = await cawNames.mintQuote(defaultClientId, false);
   console.log('mint quote returned:', quote);
 
+  var peer = await cawNames.peerWithMaxPendingTransfers();
+  console.log('max pending peer', peer);
+
+  var updatesNeeded = await cawNames.updatesNeededForPeer(BigInt(peer));
+  console.log('max pending peer', updatesNeeded);
+
+  var fee = await clientManager.getMintFeeAndAddress(0);
+  console.log('FEE:', fee[0].toString(), fee[1].toString(), quote.nativeFee.toString());
+
+  var fee = await clientManager.getMintFeeAndAddress(1);
+  console.log('FEE:', fee[0].toString(), fee[1].toString(), quote.nativeFee.toString());
+
   t = await minter.mint(defaultClientId, name, quote.lzTokenFee, {
     nonce: await web3.eth.getTransactionCount(user),
     value: (BigInt(quote.nativeFee)).toString(),
@@ -492,7 +504,7 @@ contract('CawNames', function(accounts, x) {
     web3.eth.defaultAccount = accounts[0];
     l1Endpoint = await MockLayerZeroEndpoint.new(l1);
     l2Endpoint = await MockLayerZeroEndpoint.new(l2);
-    buyAndBurnAddress = accounts[0];
+    buyAndBurnAddress = gilg;
 
     token = token || await IERC20.at(cawAddress);
     swapper = await ISwapper.at('0x7a250d5630b4cf539739df2c5dacb4c659f2488d'); // uniswap
@@ -510,7 +522,7 @@ contract('CawNames', function(accounts, x) {
     await l2Endpoint.setDestLzEndpoint(cawNames.address, l1Endpoint.address);
     await cawNames.setL2Peer(l2, cawNamesL2.address);
 
-    await clientManager.createClient(accounts[0], 1,1,1,1);
+    await clientManager.createClient(gilg, 1,1,1,1);
 
 
     cawNamesL2Mainnet = cawNamesL2Mainnet || await CawNameL2.new(l1Endpoint.address);
@@ -560,6 +572,9 @@ contract('CawNames', function(accounts, x) {
     var u1 = await cawNames.usernames(0);
     expect(u1).to.equal(name);
 
+    var nft = await cawNames.token(1);
+    console.log("First token: ", nft);
+
 
     try {
       tx = await buyUsername(accounts[2], name);
@@ -568,6 +583,8 @@ contract('CawNames', function(accounts, x) {
     error = null;
     console.log("SUCCESS 3")
 
+    var bal = await token.balanceOf(accounts[1]);
+    console.log(bal.toString());
 
     try {
       tx = await buyUsername(accounts[1], 'x');
@@ -620,6 +637,7 @@ contract('CawNames', function(accounts, x) {
     });
     var cawId = computeCawId(result.signedActions[0].data.message);
     console.log("FISRT CAW SENT!", cawId);
+    console.log("FISRT CAW SENT!", result);
 
     truffleAssert.eventEmitted(result.tx, 'ActionsProcessed', (args) => {
       var actions = decodeActions(args.actions)
@@ -868,6 +886,11 @@ contract('CawNames', function(accounts, x) {
     var tokens = await cawNames.tokens(accounts[2]);
     console.log("TOKENS:", tokens);
 
+    tokenIds = tokens.map((token) => token.tokenId)
+    console.log("checking tokens on L2", tokenIds);
+    var tokens = await cawNamesL2.getTokens(tokenIds);
+    console.log("TOKENS:", tokens);
+
     var balance = BigInt(await cawNamesL2.cawBalanceOf(1));
 
     var cawonce1 = Number(await cawActions.nextCawonce(1));
@@ -985,7 +1008,7 @@ contract('CawNames', function(accounts, x) {
 
 
 
-    await clientManager.createClient(accounts[0], 1,1,1,1);
+    await clientManager.createClient(gilg, 1,1,1,1);
 
 
 
@@ -1026,7 +1049,7 @@ contract('CawNames', function(accounts, x) {
 
 
     // Another unauthed caw that becomes authed by depositing:
-    await clientManager.createClient(accounts[0], 1,1,1,1);
+    await clientManager.createClient(gilg, 1,1,1,1);
 
     var unauthedCaw = {
       actionType: 'caw',
